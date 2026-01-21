@@ -3,103 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商品進貨計算工具</title>
+    <title>進階商品利潤計算工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @media (max-width: 640px) {
+        .input-box { @apply w-full border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none; }
+        @media (max-width: 1024px) {
             .table-responsive thead { display: none; }
-            .table-responsive tr { display: block; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; }
-            .table-responsive td { display: flex; justify-content: space-between; align-items: center; border: none; padding: 0.5rem 0; }
-            .table-responsive td::before { content: attr(data-label); font-weight: bold; color: #4a5568; }
+            .table-responsive tr { display: block; margin-bottom: 1.5rem; border: 2px solid #edf2f7; border-radius: 0.75rem; padding: 1rem; background: white; }
+            .table-responsive td { display: flex; justify-content: space-between; align-items: center; border: none; padding: 0.5rem 0; border-bottom: 1px dashed #f0f0f0; }
+            .table-responsive td::before { content: attr(data-label); font-weight: bold; color: #4a5568; margin-right: 1rem; }
         }
     </style>
 </head>
-<body class="bg-gray-50 p-4 md:p-8">
-    <div class="max-w-6xl mx-auto">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">📦 商品採購計算表</h1>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <h1 class="text-2xl font-bold text-gray-800">🚀 商品成本與毛利試算</h1>
+            <div class="bg-white p-4 rounded-lg shadow-sm border flex gap-4">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">日本運費總額 (JPY)</label>
+                    <input type="number" id="total-jp-shipping" value="0" oninput="calculateAll()" class="input-box w-32 font-bold text-orange-600">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">今日匯率 (JPY/TWD)</label>
+                    <input type="number" id="global-rate" value="0.22" step="0.001" oninput="calculateAll()" class="input-box w-24">
+                </div>
+            </div>
+        </div>
         
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <table class="w-full text-left border-collapse table-responsive">
-                <thead class="bg-gray-100 border-b">
-                    <tr>
-                        <th class="p-3 text-sm font-semibold text-gray-600">商品名稱</th>
-                        <th class="p-3 text-sm font-semibold text-gray-600">進貨價 (JPY)</th>
-                        <th class="p-3 text-sm font-semibold text-gray-600">消費稅 (10%)</th>
-                        <th class="p-3 text-sm font-semibold text-gray-600">小計 (JPY)</th>
-                        <th class="p-3 text-sm font-semibold text-gray-600">匯率 (JPY→TWD)</th>
-                        <th class="p-3 text-sm font-semibold text-gray-600 text-blue-600">小計 (TWD)</th>
-                    </tr>
-                </thead>
-                <tbody id="product-body">
-                    <tr class="hover:bg-gray-50 border-b">
-                        <td data-label="商品名稱" class="p-3">
-                            <input type="text" placeholder="輸入名稱" class="w-full border rounded px-2 py-1 outline-blue-500">
-                        </td>
-                        <td data-label="進貨價 (JPY)" class="p-3">
-                            <input type="number" value="0" oninput="calculate(this)" class="input-jpy w-full border rounded px-2 py-1">
-                        </td>
-                        <td data-label="消費稅 (10%)" class="p-3">
-                            <span class="tax-jpy text-gray-500">0</span>
-                        </td>
-                        <td data-label="小計 (JPY)" class="p-3 font-medium">
-                            <span class="subtotal-jpy">0</span>
-                        </td>
-                        <td data-label="匯率" class="p-3">
-                            <input type="number" value="0.22" step="0.001" oninput="calculate(this)" class="input-rate w-full border rounded px-2 py-1">
-                        </td>
-                        <td data-label="小計 (TWD)" class="p-3 font-bold text-blue-600">
-                            <span class="subtotal-twd">0</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="bg-white shadow-xl rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left table-responsive">
+                    <thead class="bg-gray-800 text-white">
+                        <tr>
+                            <th class="p-3 text-xs uppercase">商品資料</th>
+                            <th class="p-3 text-xs uppercase">進貨價(JPY)</th>
+                            <th class="p-3 text-xs uppercase">日本運費(TWD)</th>
+                            <th class="p-3 text-xs uppercase">國際運費(TWD)</th>
+                            <th class="p-3 text-xs uppercase text-yellow-400">總成本(TWD)</th>
+                            <th class="p-3 text-xs uppercase">目標毛利%</th>
+                            <th class="p-3 text-xs uppercase">實際售價</th>
+                            <th class="p-3 text-xs uppercase text-green-400">單品毛利/率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-body">
+                        <tr class="hover:bg-blue-50 border-b border-gray-100 transition">
+                            <td data-label="商品名稱" class="p-3">
+                                <input type="text" placeholder="商品名稱" class="input-box">
+                            </td>
+                            <td data-label="進貨價(含稅JPY)" class="p-3">
+                                <div class="flex flex-col">
+                                    <input type="number" value="0" oninput="calculateAll()" class="input-jpy input-box">
+                                    <span class="text-[10px] text-gray-400 mt-1">稅後: <span class="tax-jpy">0</span></span>
+                                </div>
+                            </td>
+                            <td data-label="日本運費(TWD)" class="p-3">
+                                <span class="ship-jp-twd font-mono">0</span>
+                            </td>
+                            <td data-label="國際運費(TWD)" class="p-3">
+                                <input type="number" value="0" oninput="calculateAll()" class="input-intl-twd input-box text-blue-600">
+                            </td>
+                            <td data-label="總成本(TWD)" class="p-3 font-bold bg-yellow-50">
+                                <span class="total-cost-twd text-yellow-700">0</span>
+                            </td>
+                            <td data-label="目標毛利%" class="p-3">
+                                <input type="number" value="30" oninput="calculateAll()" class="input-target-margin input-box w-16 text-center">%
+                            </td>
+                            <td data-label="實際售價(TWD)" class="p-3">
+                                <input type="number" value="0" oninput="calculateAll()" class="input-sell-price input-box border-green-300 font-bold text-green-700">
+                            </td>
+                            <td data-label="單品毛利/率" class="p-3">
+                                <div class="flex flex-col">
+                                    <span class="profit-twd font-bold text-gray-700">0</span>
+                                    <span class="profit-rate text-xs font-medium">0%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             
-            <div class="p-4 bg-gray-50 border-t flex justify-between">
-                <button onclick="addRow()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm transition">＋ 新增商品</button>
-                <div class="text-right">
-                    <p class="text-sm text-gray-600">總計 (TWD): <span id="grand-total" class="text-xl font-bold text-blue-700 ml-2">0</span></p>
+            <div class="p-6 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                <button onclick="addRow()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition">＋ 新增商品項目</button>
+                <div class="flex gap-8">
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 uppercase">總採購預算 (TWD)</p>
+                        <p id="grand-total-cost" class="text-2xl font-black text-gray-800">0</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 uppercase">預估總利潤 (TWD)</p>
+                        <p id="grand-total-profit" class="text-2xl font-black text-green-600">0</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function calculate(element) {
-            const row = element.closest('tr');
-            const jpyPrice = parseFloat(row.querySelector('.input-jpy').value) || 0;
-            const rate = parseFloat(row.querySelector('.input-rate').value) || 0;
+        function calculateAll() {
+            const rows = document.querySelectorAll('#product-body tr');
+            const totalJpShipping = parseFloat(document.getElementById('total-jp-shipping').value) || 0;
+            const rate = parseFloat(document.getElementById('global-rate').value) || 0;
+            const rowCount = rows.length;
 
-            // 公式計算
-            const tax = Math.round(jpyPrice * 0.1);
-            const subtotalJPY = jpyPrice + tax;
-            const subtotalTWD = Math.round(subtotalJPY * rate);
+            let totalCostSum = 0;
+            let totalProfitSum = 0;
 
-            // 更新顯示
-            row.querySelector('.tax-jpy').innerText = tax.toLocaleString();
-            row.querySelector('.subtotal-jpy').innerText = subtotalJPY.toLocaleString();
-            row.querySelector('.subtotal-twd').innerText = subtotalTWD.toLocaleString();
+            rows.forEach(row => {
+                // 讀取輸入值
+                const jpyPrice = parseFloat(row.querySelector('.input-jpy').value) || 0;
+                const intlShipTWD = parseFloat(row.querySelector('.input-intl-twd').value) || 0;
+                const targetMargin = parseFloat(row.querySelector('.input-target-margin').value) || 0;
+                const sellPrice = parseFloat(row.querySelector('.input-sell-price').value) || 0;
 
-            updateGrandTotal();
-        }
+                // 1. 計算日本稅後價 (含10%稅)
+                const taxJPY = Math.round(jpyPrice * 0.1);
+                const subtotalJPY = jpyPrice + taxJPY;
+                row.querySelector('.tax-jpy').innerText = subtotalJPY.toLocaleString();
 
-        function updateGrandTotal() {
-            let total = 0;
-            document.querySelectorAll('.subtotal-twd').forEach(span => {
-                total += parseInt(span.innerText.replace(/,/g, '')) || 0;
+                // 2. 日本運費分攤 (JPY -> TWD)
+                const shareJpShipJPY = totalJpShipping / rowCount;
+                const shareJpShipTWD = Math.round(shareJpShipJPY * rate);
+                row.querySelector('.ship-jp-twd').innerText = shareJpShipTWD.toLocaleString();
+
+                // 3. 總成本 (TWD) = (稅後JPY * 匯率) + 分攤日本運費TWD + 國際運費TWD
+                const costTWD = Math.round(subtotalJPY * rate) + shareJpShipTWD + intlShipTWD;
+                row.querySelector('.total-cost-twd').innerText = costTWD.toLocaleString();
+
+                // 4. 計算毛利與毛利率
+                const profitTWD = sellPrice - costTWD;
+                const profitRate = sellPrice > 0 ? (profitTWD / sellPrice) * 100 : 0;
+
+                // 顯示毛利
+                const profitSpan = row.querySelector('.profit-twd');
+                const rateSpan = row.querySelector('.profit-rate');
+                
+                profitSpan.innerText = profitTWD.toLocaleString();
+                rateSpan.innerText = profitRate.toFixed(1) + '%';
+
+                // 5. 邏輯判斷：如果低於目標毛利，顯示紅色
+                if (profitRate < targetMargin) {
+                    rateSpan.classList.add('text-red-500');
+                    rateSpan.classList.remove('text-green-500');
+                } else {
+                    rateSpan.classList.add('text-green-500');
+                    rateSpan.classList.remove('text-red-500');
+                }
+
+                totalCostSum += costTWD;
+                totalProfitSum += profitTWD;
             });
-            document.getElementById('grand-total').innerText = total.toLocaleString();
+
+            // 更新頁面底部總計
+            document.getElementById('grand-total-cost').innerText = totalCostSum.toLocaleString();
+            document.getElementById('grand-total-profit').innerText = totalProfitSum.toLocaleString();
         }
 
         function addRow() {
             const tbody = document.getElementById('product-body');
             const newRow = tbody.children[0].cloneNode(true);
+            
+            // 重置新行數值
             newRow.querySelectorAll('input').forEach(input => {
-                if(input.type === 'number') input.value = input.className.includes('input-rate') ? '0.22' : '0';
-                else input.value = '';
+                if (input.classList.contains('input-target-margin')) input.value = "30";
+                else if (input.type === 'number') input.value = "0";
+                else input.value = "";
             });
-            newRow.querySelectorAll('span').forEach(span => span.innerText = '0');
+            newRow.querySelectorAll('span').forEach(span => {
+                if (!span.classList.contains('tax-jpy')) span.innerText = "0";
+            });
+            
             tbody.appendChild(newRow);
+            calculateAll(); // 重新計算分攤
         }
+
+        // 初始化計算一次
+        calculateAll();
     </script>
 </body>
 </html>
