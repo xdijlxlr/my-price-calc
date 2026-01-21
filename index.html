@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品進貨計算工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media (max-width: 640px) {
+            .table-responsive thead { display: none; }
+            .table-responsive tr { display: block; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; }
+            .table-responsive td { display: flex; justify-content: space-between; align-items: center; border: none; padding: 0.5rem 0; }
+            .table-responsive td::before { content: attr(data-label); font-weight: bold; color: #4a5568; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">📦 商品採購計算表</h1>
+        
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="w-full text-left border-collapse table-responsive">
+                <thead class="bg-gray-100 border-b">
+                    <tr>
+                        <th class="p-3 text-sm font-semibold text-gray-600">商品名稱</th>
+                        <th class="p-3 text-sm font-semibold text-gray-600">進貨價 (JPY)</th>
+                        <th class="p-3 text-sm font-semibold text-gray-600">消費稅 (10%)</th>
+                        <th class="p-3 text-sm font-semibold text-gray-600">小計 (JPY)</th>
+                        <th class="p-3 text-sm font-semibold text-gray-600">匯率 (JPY→TWD)</th>
+                        <th class="p-3 text-sm font-semibold text-gray-600 text-blue-600">小計 (TWD)</th>
+                    </tr>
+                </thead>
+                <tbody id="product-body">
+                    <tr class="hover:bg-gray-50 border-b">
+                        <td data-label="商品名稱" class="p-3">
+                            <input type="text" placeholder="輸入名稱" class="w-full border rounded px-2 py-1 outline-blue-500">
+                        </td>
+                        <td data-label="進貨價 (JPY)" class="p-3">
+                            <input type="number" value="0" oninput="calculate(this)" class="input-jpy w-full border rounded px-2 py-1">
+                        </td>
+                        <td data-label="消費稅 (10%)" class="p-3">
+                            <span class="tax-jpy text-gray-500">0</span>
+                        </td>
+                        <td data-label="小計 (JPY)" class="p-3 font-medium">
+                            <span class="subtotal-jpy">0</span>
+                        </td>
+                        <td data-label="匯率" class="p-3">
+                            <input type="number" value="0.22" step="0.001" oninput="calculate(this)" class="input-rate w-full border rounded px-2 py-1">
+                        </td>
+                        <td data-label="小計 (TWD)" class="p-3 font-bold text-blue-600">
+                            <span class="subtotal-twd">0</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="p-4 bg-gray-50 border-t flex justify-between">
+                <button onclick="addRow()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm transition">＋ 新增商品</button>
+                <div class="text-right">
+                    <p class="text-sm text-gray-600">總計 (TWD): <span id="grand-total" class="text-xl font-bold text-blue-700 ml-2">0</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculate(element) {
+            const row = element.closest('tr');
+            const jpyPrice = parseFloat(row.querySelector('.input-jpy').value) || 0;
+            const rate = parseFloat(row.querySelector('.input-rate').value) || 0;
+
+            // 公式計算
+            const tax = Math.round(jpyPrice * 0.1);
+            const subtotalJPY = jpyPrice + tax;
+            const subtotalTWD = Math.round(subtotalJPY * rate);
+
+            // 更新顯示
+            row.querySelector('.tax-jpy').innerText = tax.toLocaleString();
+            row.querySelector('.subtotal-jpy').innerText = subtotalJPY.toLocaleString();
+            row.querySelector('.subtotal-twd').innerText = subtotalTWD.toLocaleString();
+
+            updateGrandTotal();
+        }
+
+        function updateGrandTotal() {
+            let total = 0;
+            document.querySelectorAll('.subtotal-twd').forEach(span => {
+                total += parseInt(span.innerText.replace(/,/g, '')) || 0;
+            });
+            document.getElementById('grand-total').innerText = total.toLocaleString();
+        }
+
+        function addRow() {
+            const tbody = document.getElementById('product-body');
+            const newRow = tbody.children[0].cloneNode(true);
+            newRow.querySelectorAll('input').forEach(input => {
+                if(input.type === 'number') input.value = input.className.includes('input-rate') ? '0.22' : '0';
+                else input.value = '';
+            });
+            newRow.querySelectorAll('span').forEach(span => span.innerText = '0');
+            tbody.appendChild(newRow);
+        }
+    </script>
+</body>
+</html>
