@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商品毛利計算器 - 含刷卡手續費版</title>
+    <title>商品毛利計算器 - 完整功能版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .input-box { @apply w-full border border-gray-300 rounded-md px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white; }
@@ -15,6 +15,7 @@
                 display: block; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; 
                 border-radius: 1rem; padding: 1rem; background: white; 
                 box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+                position: relative;
             }
             .table-responsive td { 
                 display: flex; justify-content: space-between; align-items: center; 
@@ -27,18 +28,23 @@
             .table-responsive td > div, .table-responsive td > input, .table-responsive td > span {
                 text-align: right; width: auto; max-width: 65%;
             }
-            .table-responsive td:last-child { border-bottom: none; }
+            /* 手機版刪除按鈕特別處理 */
+            .btn-delete-container {
+                border-bottom: none !important;
+                justify-content: center !important;
+                padding-top: 1rem !important;
+            }
         }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen p-3 md:p-8">
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
         
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 mb-6">
             <div class="flex flex-col lg:flex-row justify-between gap-6">
                 <div class="space-y-1">
-                    <h1 class="text-xl font-black text-slate-800 tracking-tight">📦 採購定價工具</h1>
-                    <p class="text-gray-400 text-xs">公式已包含 1.5% 海外刷卡手續費</p>
+                    <h1 class="text-xl font-black text-slate-800 tracking-tight text-center lg:text-left">📦 採購定價工具</h1>
+                    <p class="text-gray-400 text-xs text-center lg:text-left">含 1.5% 海外手續費與自動運費分攤</p>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -73,12 +79,13 @@
                             <th class="p-4 text-xs font-bold text-cyan-400">建議售價</th>
                             <th class="p-4 text-xs font-bold">實際售價</th>
                             <th class="p-4 text-xs font-bold text-right">利潤分析</th>
+                            <th class="p-4 text-xs font-bold text-center">操作</th>
                         </tr>
                     </thead>
                     <tbody id="product-body">
                         <tr class="hover:bg-slate-50 border-b border-gray-50 transition-colors">
                             <td data-label="商品名稱" class="p-4">
-                                <input type="text" placeholder="商品名稱" class="input-box font-medium">
+                                <input type="text" placeholder="輸入名稱" class="input-box font-medium">
                             </td>
                             <td data-label="進貨價(JPY)" class="p-4">
                                 <div class="flex flex-col items-end md:items-start">
@@ -93,7 +100,7 @@
                                 <div class="flex flex-col items-end md:items-start space-y-1">
                                     <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold">日運: <span class="ship-jp-twd">0</span></span>
                                     <div class="flex items-center gap-1">
-                                        <span class="text-[10px] text-gray-400 uppercase">國際:</span>
+                                        <span class="text-[10px] text-gray-400 uppercase tracking-tighter">國際TWD:</span>
                                         <input type="number" value="0" oninput="calculateAll()" class="input-intl-twd border rounded w-16 px-1 text-xs text-center">
                                     </div>
                                 </div>
@@ -101,7 +108,7 @@
                             <td data-label="總成本(TWD)" class="p-4 bg-amber-50">
                                 <div class="flex flex-col items-end md:items-center">
                                     <span class="total-cost-twd text-amber-700 text-lg font-black">0</span>
-                                    <span class="text-[9px] text-amber-600 font-medium">含刷卡 1.5%: <span class="cc-fee-twd">0</span></span>
+                                    <span class="text-[9px] text-amber-600 font-medium">含刷卡1.5%: <span class="cc-fee-twd">0</span></span>
                                 </div>
                             </td>
                             <td data-label="建議售價" class="p-4 font-bold text-cyan-700 md:text-center">
@@ -116,6 +123,13 @@
                                     <span class="profit-rate text-[10px] font-bold px-2 py-0.5 rounded-full inline-block self-end mt-1">0%</span>
                                 </div>
                             </td>
+                            <td data-label="操作工具" class="p-4 text-center btn-delete-container">
+                                <button onclick="removeRow(this)" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all" title="刪除此項">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -123,10 +137,10 @@
             
             <div class="p-4 md:p-6 bg-slate-50 border-t flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex gap-2 w-full md:w-auto">
-                    <button onclick="addRow()" class="flex-1 md:flex-none bg-slate-800 hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold transition-all active:scale-95">
+                    <button onclick="addRow()" class="flex-1 md:flex-none bg-slate-800 hover:bg-black text-white px-6 py-3 rounded-xl font-bold shadow-md transition-all active:scale-95">
                         ＋ 新增項目
                     </button>
-                    <button onclick="window.location.reload()" class="bg-white border border-gray-300 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-100 transition-all">
+                    <button onclick="confirmReset()" class="bg-white border border-gray-300 text-gray-500 px-4 py-3 rounded-xl text-sm font-medium hover:bg-gray-100 transition-all">
                         重置清空
                     </button>
                 </div>
@@ -134,11 +148,11 @@
                 <div class="flex gap-6 w-full md:w-auto justify-around md:justify-end border-t md:border-t-0 pt-4 md:pt-0">
                     <div class="text-right">
                         <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">總採購成本</p>
-                        <p id="grand-total-cost" class="text-xl md:text-2xl font-black text-slate-800">0</p>
+                        <p id="grand-total-cost" class="text-xl md:text-3xl font-black text-slate-800">0</p>
                     </div>
                     <div class="text-right border-l pl-6 border-gray-200">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">總利潤</p>
-                        <p id="grand-total-profit" class="text-xl md:text-2xl font-black text-emerald-600">0</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">總預估利潤</p>
+                        <p id="grand-total-profit" class="text-xl md:text-3xl font-black text-emerald-600">0</p>
                     </div>
                 </div>
             </div>
@@ -167,16 +181,16 @@
                 row.querySelector('.tax-only').innerText = taxOnly.toLocaleString();
                 row.querySelector('.tax-total').innerText = jpyWithTax.toLocaleString();
 
-                // 2. 海外刷卡手續費 1.5% (基於含稅價匯換算後的 TWD)
+                // 2. 海外刷卡手續費 1.5%
                 const priceInTWD = jpyWithTax * rate;
                 const ccFeeTWD = Math.round(priceInTWD * 0.015);
                 row.querySelector('.cc-fee-twd').innerText = ccFeeTWD.toLocaleString();
 
-                // 3. 日本運費分攤 (TWD)
+                // 3. 日本運費分攤 (TWD) - 隨 rowCount 變動
                 const shareJpShipTWD = rowCount > 0 ? Math.round((totalJpShippingJPY / rowCount) * rate) : 0;
                 row.querySelector('.ship-jp-twd').innerText = shareJpShipTWD.toLocaleString();
 
-                // 4. 總成本 (TWD) = 日幣含稅換算 + 刷卡手續費 + 日運分攤 + 國際運費
+                // 4. 總成本 (TWD)
                 const costTWD = Math.round(priceInTWD) + ccFeeTWD + shareJpShipTWD + intlShipTWD;
                 row.querySelector('.total-cost-twd').innerText = costTWD.toLocaleString();
 
@@ -208,10 +222,35 @@
 
         function addRow() {
             const tbody = document.getElementById('product-body');
-            const newRow = tbody.children[0].cloneNode(true);
+            const firstRow = tbody.querySelector('tr');
+            const newRow = firstRow.cloneNode(true);
+            
+            // 清空所有輸入與顯示
             newRow.querySelectorAll('input').forEach(input => input.value = input.type === 'number' ? 0 : "");
+            newRow.querySelectorAll('span').forEach(span => {
+                if (!span.classList.contains('tax-only') && !span.classList.contains('tax-total')) {
+                    span.innerText = "0";
+                }
+            });
+            
             tbody.appendChild(newRow);
             calculateAll();
+        }
+
+        function removeRow(btn) {
+            const tbody = document.getElementById('product-body');
+            if (tbody.querySelectorAll('tr').length > 1) {
+                btn.closest('tr').remove();
+                calculateAll(); // 重新分配剩餘商品的運費
+            } else {
+                alert("請至少保留一個商品項目。若要清空請點擊『重置清空』。");
+            }
+        }
+
+        function confirmReset() {
+            if (confirm("確定要清空所有已輸入的資料嗎？")) {
+                window.location.reload();
+            }
         }
 
         window.onload = calculateAll;
